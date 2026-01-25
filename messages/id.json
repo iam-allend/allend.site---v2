@@ -1,0 +1,12 @@
+{
+  "nav": {
+    "home": "Beranda",
+    "portfolio": "Portofolio",
+    "about": "Tentang",
+    "contact": "Kontak"
+  },
+  "hero": {
+    "title": "Pengrajin Digital",
+    "subtitle": "Tersedia untuk Freelance & Full-time"
+  }
+}

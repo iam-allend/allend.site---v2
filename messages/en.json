@@ -1,0 +1,12 @@
+{
+  "nav": {
+    "home": "Home",
+    "portfolio": "Portfolio",
+    "about": "About",
+    "contact": "Contact"
+  },
+  "hero": {
+    "title": "Digital Craftsman",
+    "subtitle": "Available for Freelance & Full-time"
+  }
+}
