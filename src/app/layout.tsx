@@ -21,7 +21,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={spaceGrotesk.variable}>
-      <body className="font-sans antialiased">
+      <body className="font-sans antialiased" style={{ fontFamily: 'system-ui, sans-serif' }}>
         <SessionProvider>
           {children}
         </SessionProvider>

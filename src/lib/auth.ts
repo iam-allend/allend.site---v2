@@ -20,7 +20,7 @@ export const authConfig: NextAuthConfig = {
           const { data: user, error } = await supabase
             .from('users')
             .select('*')
-            .eq('email', credentials.email.toLowerCase())
+            .eq('email', (credentials.email as string).toLowerCase())
             .single();
 
           if (error || !user) {

@@ -1,8 +1,5 @@
 'use client';
 
-import Image from 'next/image';
-
-
 import AnimatedBackground from '@/components/shared/AnimatedBackground';
 import CustomCursor from '@/components/shared/CustomCursor';
 import Header from '@/components/layout/Header';

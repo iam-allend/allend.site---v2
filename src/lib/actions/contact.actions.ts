@@ -1,8 +1,16 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { supabase } from '@/lib/db/supabase';
 import { contactSchema, type ContactFormData } from '@/lib/validations/contact.schema';
 import { Resend } from 'resend';
+import { z } from 'zod';
+import { 
+  markAsRead, 
+  markAsUnread, 
+  markAsReplied, 
+  deleteContact 
+} from '@/lib/db/queries/contacts';
 
 // Initialize Resend (if API key exists)
 const resend = process.env.RESEND_API_KEY 
@@ -14,6 +22,10 @@ interface ActionResponse {
   message: string;
   error?: string;
 }
+
+// ============================================
+// PUBLIC CONTACT FORM SUBMISSION
+// ============================================
 
 export async function submitContactForm(
   data: ContactFormData
@@ -85,7 +97,7 @@ export async function submitContactForm(
       return {
         success: false,
         message: 'Validation error',
-        error: error.errors[0].message,
+        error: error.issues[0]?.message || 'Invalid input',
       };
     }
 
@@ -94,5 +106,49 @@ export async function submitContactForm(
       message: 'Failed to send message. Please try again.',
       error: error instanceof Error ? error.message : 'Unknown error',
     };
+  }
+}
+
+// ============================================
+// ADMIN MESSAGE MANAGEMENT ACTIONS
+// ============================================
+
+export async function toggleReadStatus(id: string, currentStatus: boolean) {
+  try {
+    if (currentStatus) {
+      await markAsUnread(id);
+    } else {
+      await markAsRead(id);
+    }
+
+    revalidatePath('/admin/messages');
+    return { success: true, message: 'Status updated successfully' };
+  } catch (error: any) {
+    console.error('Toggle read status error:', error);
+    return { success: false, message: error.message || 'Failed to update status' };
+  }
+}
+
+export async function replyToMessage(id: string) {
+  try {
+    await markAsReplied(id);
+
+    revalidatePath('/admin/messages');
+    return { success: true, message: 'Marked as replied' };
+  } catch (error: any) {
+    console.error('Reply to message error:', error);
+    return { success: false, message: error.message || 'Failed to mark as replied' };
+  }
+}
+
+export async function deleteMessage(id: string) {
+  try {
+    await deleteContact(id);
+
+    revalidatePath('/admin/messages');
+    return { success: true, message: 'Message deleted successfully' };
+  } catch (error: any) {
+    console.error('Delete message error:', error);
+    return { success: false, message: error.message || 'Failed to delete message' };
   }
 }
