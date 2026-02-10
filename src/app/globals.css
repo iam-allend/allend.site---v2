@@ -4,6 +4,10 @@
 @tailwind components;
 @tailwind utilities;
 
+
+
+
+
 @layer base {
   :root {
     --font-space-grotesk: "Space Grotesk", sans-serif;
@@ -71,6 +75,7 @@
     background-size: 50px 50px;
     animation: grid-flow 20s linear infinite;
   }
+
 
   @keyframes grid-flow {
     0% { background-position: 0 0; }
