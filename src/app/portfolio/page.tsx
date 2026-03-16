@@ -9,10 +9,10 @@ import { getPublicProjects, getFields, getProjectCountByField } from '@/lib/db/q
 
 // Metadata for SEO
 export const metadata: Metadata = {
-  title: 'Portfolio | Your Name',
+  title: 'Portfolio | Anur Mustakim',
   description: 'Explore my portfolio of web development, mobile apps, and design projects.',
   openGraph: {
-    title: 'Portfolio | Your Name',
+    title: 'Portfolio | Anur Mustakim',
     description: 'Explore my portfolio of web development, mobile apps, and design projects.',
   },
 };

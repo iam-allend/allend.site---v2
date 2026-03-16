@@ -155,7 +155,7 @@ export default function ContactPage() {
                         className={`w-full px-4 py-3 glass rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00D9FF] bg-transparent transition-all ${
                           errors.name ? 'ring-2 ring-red-500' : ''
                         }`}
-                        placeholder="Your name"
+                        placeholder="Anur Mustakim"
                       />
                       {errors.name && (
                         <p className="text-red-400 text-sm mt-1">
