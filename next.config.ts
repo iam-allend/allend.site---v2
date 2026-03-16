@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '*.supabase.co', // Wildcard untuk semua Supabase subdomain
+        hostname: 'ldsoffeqloybimswwjpz.supabase.co', // hostname spesifik, bukan wildcard
         port: '',
         pathname: '/storage/v1/object/public/**',
       },

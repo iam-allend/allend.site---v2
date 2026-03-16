@@ -1,154 +1,185 @@
+// src/app/api/projects/route.ts
+import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/db/supabase';
-import { NextResponse } from 'next/server';
 
-  export async function POST(request: Request) {
-    try {
-      const session = await auth();
-
-      if (!session?.user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-
-      const data = await request.json();
-      const { technologies, images, ...projectData } = data;
-
-      // Insert project
-      const { data: project, error: projectError } = await supabaseAdmin
-        .from('projects')
-        .insert({
-          ...projectData,
-          created_by: session.user.id,
-        })
-        .select()
-        .single();
-
-      if (projectError) {
-        console.error('Project insert error:', projectError);
-        return NextResponse.json(
-          { error: projectError.message },
-          { status: 400 }
-        );
-      }
-
-      // Insert project technologies
-      if (technologies && technologies.length > 0) {
-        const techRelations = technologies.map((techId: string) => ({
-          project_id: project.id,
-          technology_id: techId,
-        }));
-
-        const { error: techError } = await supabaseAdmin
-          .from('project_technologies')
-          .insert(techRelations);
-
-        if (techError) {
-          console.error('Tech relation error:', techError);
-        }
-      }
-
-      // ✅ Assign images to project
-      if (images && images.length > 0) {
-        const { error: imageError } = await supabaseAdmin
-          .from('project_images')
-          .update({ project_id: project.id })
-          .in('id', images);
-
-        if (imageError) {
-          console.error('Image assignment error:', imageError);
-        }
-      }
-
-      return NextResponse.json({ success: true, project });
-    } catch (error) {
-      console.error('API error:', error);
-      return NextResponse.json(
-        { error: 'Internal server error' },
-        { status: 500 }
-      );
+// POST - Create new project
+export async function POST(request: Request) {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-  }
 
-  export async function PUT(request: Request) {
-    try {
-      const session = await auth();
+    const body = await request.json();
+    const {
+      title,
+      slug,
+      description,
+      role,
+      field_id,
+      status,
+      start_date,
+      end_date,
+      is_current,
+      is_featured,
+      project_url,
+      github_url,
+      technologies,
+      images, // Array of project_images.id in order
+    } = body;
 
-      if (!session?.user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
+    // Create project
+    const { data: project, error: projectError } = await supabaseAdmin
+      .from('projects')
+      .insert({
+        title,
+        slug,
+        description,
+        role,
+        field_id,
+        status,
+        start_date,
+        end_date,
+        is_current,
+        is_featured,
+        project_url,
+        github_url,
+        created_by: session.user.id,
+      })
+      .select()
+      .single();
 
-      const data = await request.json();
-      const { id, technologies, images, ...projectData } = data;
+    if (projectError) throw projectError;
 
-      if (!id) {
-        return NextResponse.json({ error: 'Project ID required' }, { status: 400 });
-      }
+    // Insert technologies
+    if (technologies && technologies.length > 0) {
+      const techRecords = technologies.map((tech_id: string) => ({
+        project_id: project.id,
+        technology_id: tech_id,
+      }));
 
-      // Update project
-      const { data: project, error: projectError } = await supabaseAdmin
-        .from('projects')
-        .update(projectData)
-        .eq('id', id)
-        .select()
-        .single();
+      await supabaseAdmin.from('project_technologies').insert(techRecords);
+    }
 
-      if (projectError) {
-        return NextResponse.json(
-          { error: projectError.message },
-          { status: 400 }
-        );
-      }
-
-      // Update technologies
-      if (technologies) {
-        await supabaseAdmin
-          .from('project_technologies')
-          .delete()
-          .eq('project_id', id);
-
-        if (technologies.length > 0) {
-          const techRelations = technologies.map((techId: string) => ({
-            project_id: id,
-            technology_id: techId,
-          }));
-
-          await supabaseAdmin
-            .from('project_technologies')
-            .insert(techRelations);
-        }
-      }
-
-      // ✅ Update images
-      if (images) {
-        // Unassign old images
+    // ✅ Link images ke project baru - hanya update project_id dan sort_order
+    // URL di project_images TIDAK diubah
+    if (images && images.length > 0) {
+      for (let index = 0; index < images.length; index++) {
         await supabaseAdmin
           .from('project_images')
-          .update({ project_id: null })
-          .eq('project_id', id);
-
-        // Assign new images
-        if (images.length > 0) {
-          await supabaseAdmin
-            .from('project_images')
-            .update({ project_id: id })
-            .in('id', images);
-        }
+          .update({ project_id: project.id, sort_order: index })
+          .eq('id', images[index]);
       }
-
-      return NextResponse.json({ success: true, project });
-    } catch (error) {
-      console.error('API error:', error);
-      return NextResponse.json(
-        { error: 'Internal server error' },
-        { status: 500 }
-      );
     }
-  }
 
+    return NextResponse.json({ project }, { status: 201 });
+  } catch (error) {
+    console.error('POST /api/projects error:', error);
+    return NextResponse.json(
+      { error: 'Failed to create project' },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT - Update project
+export async function PUT(request: Request) {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const {
+      id,
+      title,
+      slug,
+      description,
+      role,
+      field_id,
+      status,
+      start_date,
+      end_date,
+      is_current,
+      is_featured,
+      project_url,
+      github_url,
+      technologies,
+      images, // Array of project_images.id in order
+    } = body;
+
+    // Update project
+    const { data: project, error: projectError } = await supabaseAdmin
+      .from('projects')
+      .update({
+        title,
+        slug,
+        description,
+        role,
+        field_id,
+        status,
+        start_date,
+        end_date,
+        is_current,
+        is_featured,
+        project_url,
+        github_url,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (projectError) throw projectError;
+
+    // Update technologies (delete all and re-insert)
+    await supabaseAdmin
+      .from('project_technologies')
+      .delete()
+      .eq('project_id', id);
+
+    if (technologies && technologies.length > 0) {
+      const techRecords = technologies.map((tech_id: string) => ({
+        project_id: id,
+        technology_id: tech_id,
+      }));
+
+      await supabaseAdmin.from('project_technologies').insert(techRecords);
+    }
+
+    // ✅ Update images - hanya ubah project_id dan sort_order, URL TIDAK disentuh
+    // Step 1: Unlink semua images yang sebelumnya terhubung ke project ini
+    await supabaseAdmin
+      .from('project_images')
+      .update({ project_id: null })
+      .eq('project_id', id);
+
+    // Step 2: Link images yang dipilih dengan sort_order baru
+    if (images && images.length > 0) {
+      for (let index = 0; index < images.length; index++) {
+        await supabaseAdmin
+          .from('project_images')
+          .update({ project_id: id, sort_order: index })
+          .eq('id', images[index]);
+      }
+    }
+
+    return NextResponse.json({ project });
+  } catch (error) {
+    console.error('PUT /api/projects error:', error);
+    return NextResponse.json(
+      { error: 'Failed to update project' },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE - Soft delete project
 export async function DELETE(request: Request) {
   try {
     const session = await auth();
-
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -157,24 +188,30 @@ export async function DELETE(request: Request) {
     const id = searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json({ error: 'Project ID required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Project ID is required' },
+        { status: 400 }
+      );
     }
 
-    // Soft delete - set deleted_at
+    // Unlink images sebelum soft delete
+    await supabaseAdmin
+      .from('project_images')
+      .update({ project_id: null })
+      .eq('project_id', id);
+
     const { error } = await supabaseAdmin
       .from('projects')
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
+    if (error) throw error;
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('API error:', error);
+    console.error('DELETE /api/projects error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to delete project' },
       { status: 500 }
     );
   }

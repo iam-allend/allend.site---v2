@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 
-import ImagePicker from './ImagePicker';
+// ✅ CHANGE THIS: Use ImagePickerWithOrder instead
+import ImagePickerWithOrder from './ImagePickerWithOrder';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -19,11 +20,8 @@ const projectSchema = z.object({
   status: z.enum(['ONGOING', 'COMPLETED', 'PAUSED']),
   start_date: z.string().optional(),
   end_date: z.string().optional(),
-
-  // FIX
   is_current: z.boolean(),
   is_featured: z.boolean(),
-
   project_url: z.string().url().optional().or(z.literal('')),
   github_url: z.string().url().optional().or(z.literal('')),
   technologies: z.array(z.string()).min(1),
@@ -31,7 +29,6 @@ const projectSchema = z.object({
 });
 
 type ProjectFormData = z.infer<typeof projectSchema>;
-
 
 interface Field {
   id: string;
@@ -63,7 +60,7 @@ export default function ProjectForm({
   const [error, setError] = useState('');
   
   const [selectedImageIds, setSelectedImageIds] = useState<string[]>(
-    (initialData?.images as string[]) || []  // ✅ Type assertion
+    (initialData?.images as string[]) || []
   );
 
   const {
@@ -83,7 +80,6 @@ export default function ProjectForm({
   });
 
   const selectedTechs = watch('technologies') || [];
-  const title = watch('title');
 
   // Auto-generate slug from title
   const generateSlug = (text: string) => {
@@ -98,7 +94,6 @@ export default function ProjectForm({
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
     if (!projectId) {
-      // Only auto-generate for new projects
       setValue('slug', generateSlug(newTitle));
     }
   };
@@ -126,7 +121,7 @@ export default function ProjectForm({
         body: JSON.stringify({
           ...data,
           id: projectId,
-          images: selectedImageIds, // ✅ Tambahkan ini
+          images: selectedImageIds, // ✅ In correct order
         }),
       });
 
@@ -326,12 +321,13 @@ export default function ProjectForm({
           </label>
         </div>
 
-        {/* Images */}
-        <ImagePicker
+        {/* ✅ CHANGED: Use ImagePickerWithOrder with drag & drop */}
+        <ImagePickerWithOrder
           selectedImages={selectedImageIds}
           onChange={setSelectedImageIds}
           projectId={projectId}
-        />  
+        />
+
 
         {/* Technologies */}
         <div>

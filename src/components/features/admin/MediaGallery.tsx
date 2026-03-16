@@ -132,8 +132,8 @@ export default function MediaGallery({ images }: MediaGalleryProps) {
               onChange={(e) => setFilterProject(e.target.value)}
               className="glass px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             >
-              <option value="all">All Projects</option>
-              <option value="unassigned">Unassigned</option>
+              <option key="all" value="all">All Projects</option>
+              <option key="unassigned" value="unassigned">Unassigned</option>
               {projects.map((project) => (
                 <option key={project.id} value={project.id}>
                   {project.title}

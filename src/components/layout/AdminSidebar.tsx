@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
   FolderKanban,
+  Drone,
   Image,
   MessageSquare,
   User,
@@ -43,6 +44,11 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
       href: '/admin/media',
       label: 'Media Library',
       icon: Image,
+    },
+    {
+      href: '/admin/technologies',
+      label: 'Technologies',
+      icon: Drone,
     },
     {
       href: '/admin/messages',

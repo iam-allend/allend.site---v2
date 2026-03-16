@@ -6,6 +6,7 @@ import { Project, Field } from '@/types/project';
 import ProjectFilter from './ProjectFilter';
 import ProjectGrid from './ProjectGrid';
 import ProjectDetail from './ProjectDetail';
+import { AnimatePresence } from 'framer-motion';
 
 interface PortfolioClientProps {
   projects: Project[];
@@ -57,10 +58,16 @@ export default function PortfolioClient({
       {/* Projects Grid */}
       <ProjectGrid projects={filteredProjects} onProjectClick={handleProjectClick} />
 
-      {/* Project Detail Modal */}
-      {selectedProject && (
-        <ProjectDetail project={selectedProject} onClose={handleCloseModal} />
-      )}
+      {/* Project Detail Modal with AnimatePresence */}
+      <AnimatePresence mode="wait">
+        {selectedProject && (
+          <ProjectDetail
+            key={selectedProject.id}
+            project={selectedProject}
+            onClose={handleCloseModal}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }
