@@ -1,3 +1,4 @@
+
 // src/app/portfolio/page.tsx
 import { Metadata } from 'next';
 import AnimatedBackground from '@/components/shared/AnimatedBackground';
@@ -6,6 +7,9 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import PortfolioClient from '@/components/features/portfolio/PortfolioClient';
 import { getPublicProjects, getFields, getProjectCountByField } from '@/lib/db/queries/projects';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // Metadata for SEO
 export const metadata: Metadata = {
@@ -18,7 +22,6 @@ export const metadata: Metadata = {
 };
 
 // Revalidate every 1 hour (3600 seconds)
-export const revalidate = 3600;
 
 export default async function PortfolioPage() {
   // Fetch data server-side in parallel

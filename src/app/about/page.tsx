@@ -3,7 +3,8 @@ import AboutPageClient from '@/components/features/about/AboutPageClient';
 import { getCurrentCV } from '@/lib/actions/user.actions';
 import { getGeneralSettings } from '@/lib/db/queries/home';
 
-export const revalidate = 3600; // Revalidate every hour
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function AboutPage() {
   // Fetch CV URL and settings

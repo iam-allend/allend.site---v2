@@ -8,6 +8,9 @@ import HeroSection from '@/components/features/home/HeroSection';
 import FeaturedWorkSection from '@/components/features/home/FeaturedWorkSection';
 import { getHomePageData } from '@/lib/db/queries/home';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Generate dynamic metadata
 export async function generateMetadata(): Promise<Metadata> {
   const { profile, settings } = await getHomePageData();
@@ -31,9 +34,6 @@ export async function generateMetadata(): Promise<Metadata> {
     },
   };
 }
-
-// Revalidate every 1 hour
-export const revalidate = 3600;
 
 export default async function Home() {
   // Fetch all home page data server-side
