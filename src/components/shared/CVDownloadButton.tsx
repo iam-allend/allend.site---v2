@@ -16,7 +16,7 @@ import {
 
 interface CVDownloadButtonProps {
   cvUrl: string;
-  variant?: 'primary' | 'secondary' | 'outline';
+  variant?: 'primary' | 'secondary' | 'ghost'; // ✅ FIXED: Changed from 'outline' to 'ghost'
   magnetic?: boolean;
   className?: string;
 }
@@ -53,7 +53,6 @@ export default function CVDownloadButton({
 
   return (
     <>
-      {/* ✅ FIXED: Added inline-flex and whitespace-nowrap */}
       <div 
         onClick={handleClick} 
         className={`inline-flex whitespace-nowrap ${className}`}
