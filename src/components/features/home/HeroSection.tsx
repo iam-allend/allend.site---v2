@@ -1,6 +1,7 @@
 // src/components/features/home/HeroSection.tsx
 import GlassCard from '@/components/shared/GlassCard';
 import NeonButton from '@/components/shared/NeonButton';
+import CVDownloadButton from '@/components/shared/CVDownloadButton';
 import Link from 'next/link';
 
 interface HeroSectionProps {
@@ -89,17 +90,13 @@ export default function HeroSection({
                 </NeonButton>
               </Link>
               
+              {/* ✅ FIXED: CV Download with confirmation */}
               {cvUrl && (
-                <a 
-                  href={cvUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  download
-                >
-                  <NeonButton variant="secondary" magnetic>
-                    Download CV
-                  </NeonButton>
-                </a>
+                <CVDownloadButton 
+                  cvUrl={cvUrl}
+                  variant="secondary"
+                  magnetic
+                />
               )}
             </div>
 
