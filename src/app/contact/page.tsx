@@ -12,8 +12,6 @@ import Footer from '@/components/layout/Footer';
 import { submitContactForm } from '@/lib/actions/contact.actions';
 import { contactSchema, type ContactFormData } from '@/lib/validations/contact.schema';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);

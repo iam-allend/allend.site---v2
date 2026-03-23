@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // src/app/portfolio/page.tsx
 import { Metadata } from 'next';
@@ -7,9 +9,6 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import PortfolioClient from '@/components/features/portfolio/PortfolioClient';
 import { getPublicProjects, getFields, getProjectCountByField } from '@/lib/db/queries/projects';
-
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 // Metadata for SEO
 export const metadata: Metadata = {
