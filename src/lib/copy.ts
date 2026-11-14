@@ -134,7 +134,7 @@ export const copy = {
     },
   },
   footer: {
-    blurb: l('Fullstack web developer di Semarang. Juga desain grafis dan IT support.', 'Fullstack web developer in Semarang. Also graphic design and IT support.'),
+    blurb: l('Fullstack web developer. Juga desain grafis dan IT support.', 'Fullstack web developer. Also graphic design and IT support.'),
     pages: l('Halaman', 'Pages'),
     profiles: l('Profil', 'Profiles'),
     contact: l('Kontak', 'Contact'),

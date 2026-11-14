@@ -30,8 +30,7 @@ export default async function HomePage() {
           <div className="hero-grid">
             <div>
               <div className="byline">
-                <span className="avatar">AM</span>
-                <span><strong>{profile.full_name}</strong><small>{profile.location}</small></span>
+                <span><strong>{profile.full_name}</strong><small>Living with intention</small></span>
               </div>
               <h1 className="role-title">{roleFirst}<br />{roleRest.join(' ')}<em>.</em></h1>
               <p className="lede">{t(profile.intro)}</p>

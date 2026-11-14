@@ -9,7 +9,7 @@ const mono = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '500'], variab
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
   title: { default: 'ALLEND | Anur Mustakim, Fullstack Web Developer', template: '%s | ALLEND' },
-  description: 'Fullstack web developer di Semarang: HRIS, ERP, sistem manajemen servis, dan platform jurnal.',
+  description: 'Fullstack web developer: HRIS, ERP, sistem manajemen servis, dan platform jurnal.',
 };
 
 export const viewport: Viewport = {
