@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
+import { NavProgress } from '@/components/NavProgress';
 import { copy } from '@/lib/copy';
 import { getProfile } from '@/lib/content';
 import { mediaUrl } from '@/lib/format';
@@ -77,6 +79,7 @@ export async function SiteShell({ lang, children }: { lang: Lang; children: Reac
 
       <Reveal />
       <Mascot />
+      <Suspense><NavProgress /></Suspense>
     </>
   );
 }

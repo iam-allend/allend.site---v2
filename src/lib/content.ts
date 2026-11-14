@@ -1,7 +1,7 @@
 import 'server-only';
 import { unstable_cache } from 'next/cache';
 import { publicDb } from '@/lib/supabase/public';
-import type { Category, Education, Experience, Profile, Project, ProjectCard, SkillGroup } from '@/lib/types';
+import type { Category, Education, Experience, Profile, Project, ProjectCard, ProjectRef, SkillGroup } from '@/lib/types';
 
 /** Every public read is cached under this tag; admin writes call revalidateTag(CONTENT_TAG). */
 export const CONTENT_TAG = 'content';
@@ -59,16 +59,38 @@ export const getProjectPage = cached('projects:page', async (category: string | 
   return { items: (data ?? []) as ProjectCard[], total, page, per, pages: Math.max(1, Math.ceil(total / per)) } satisfies Page<ProjectCard>;
 });
 
-/** Published project count per category (one tiny query). */
-export const getCategoryCounts = cached('projects:counts', async () => {
-  const rows = must<{ category: string }[]>(
-    await publicDb.from('v2_projects').select('category').eq('status', 'published'),
-    'category counts',
-  );
+/**
+ * Lean index of every published project (order, title, cover image). One cached query
+ * serves the category counts on /portfolio and the previous/next cards on detail pages.
+ */
+export const getProjectIndex = cached('projects:index', async () =>
+  must<ProjectRef[]>(
+    await publicDb
+      .from('v2_projects')
+      .select('id, slug, sort, category, title, summary, images:v2_project_images(id, bucket, path, width, height, alt, sort)')
+      .eq('status', 'published')
+      .order('sort')
+      .order('sort', { referencedTable: 'images' })
+      .limit(1, { referencedTable: 'images' }),
+    'project index',
+  ),
+);
+
+/** Published project count per category, from the cached index. */
+export async function getCategoryCounts() {
+  const index = await getProjectIndex();
   const counts: Record<string, number> = {};
-  for (const { category } of rows) counts[category] = (counts[category] ?? 0) + 1;
-  return { counts, total: rows.length };
-});
+  for (const { category } of index) counts[category] = (counts[category] ?? 0) + 1;
+  return { counts, total: index.length };
+}
+
+/** Previous and next published projects (wrapping around), from the cached index. */
+export async function getNeighbours(slug: string) {
+  const index = await getProjectIndex();
+  const at = index.findIndex((p) => p.slug === slug);
+  if (at < 0 || index.length < 2) return { prev: null, next: null };
+  return { prev: index[(at - 1 + index.length) % index.length], next: index[(at + 1) % index.length] };
+}
 
 export const getProject = cached('project', async (slug: string) =>
   must<Project | null>(
@@ -82,27 +104,6 @@ export const getProject = cached('project', async (slug: string) =>
     'project',
   ),
 );
-
-/** Previous and next published projects by display order (wrapping around). */
-export const getNeighbours = cached('project:neighbours', async (sort: number) => {
-  // One image per neighbour is enough for the preview card.
-  const base = () =>
-    publicDb
-      .from('v2_projects')
-      .select('id, slug, category, year, featured, sort, title, client, summary, scope, links, images:v2_project_images(id, bucket, path, width, height, alt, sort)')
-      .eq('status', 'published')
-      .order('sort', { referencedTable: 'images' })
-      .limit(1, { referencedTable: 'images' });
-
-  const [before, after, last, first] = await Promise.all([
-    base().lt('sort', sort).order('sort', { ascending: false }).limit(1),
-    base().gt('sort', sort).order('sort').limit(1),
-    base().order('sort', { ascending: false }).limit(1),
-    base().order('sort').limit(1),
-  ]);
-  const pick = (r: { data: unknown[] | null }) => ((r.data ?? [])[0] ?? null) as ProjectCard | null;
-  return { prev: pick(before) ?? pick(last), next: pick(after) ?? pick(first) };
-});
 
 export const getSkillGroups = cached('skills', async () =>
   must<SkillGroup[]>(

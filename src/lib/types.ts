@@ -66,6 +66,9 @@ export type ProjectCard = Pick<Project, 'id' | 'slug' | 'category' | 'year' | 'f
   photos?: { count: number }[];
 };
 
+/** Minimal project reference (index, neighbours). */
+export type ProjectRef = Pick<Project, 'id' | 'slug' | 'sort' | 'category' | 'title' | 'summary' | 'images'>;
+
 export type SkillGroup = { id: string; area: SkillArea; title: I18n; sort: number; skills: Skill[] };
 export type Skill = { id: string; name: I18n; sort: number };
 

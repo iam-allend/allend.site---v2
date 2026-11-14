@@ -796,3 +796,21 @@ img.shot-img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; o
 .wcard-proof span { font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: var(--r-sm); border: 1px solid var(--rule); color: var(--ink-2); }
 .wcard-go { font-size: 14px; font-weight: 600; color: var(--ink-3); transition: color .2s ease, transform .2s var(--ease); }
 .wcard:hover .wcard-go { color: var(--accent); transform: translateX(3px); }
+.sk-wcard { display: grid; gap: 4px; }
+.sk-media { aspect-ratio: 16 / 9; border-radius: var(--r-lg); }
+.sk-stage { aspect-ratio: 16 / 9; border-radius: var(--r-lg); background: color-mix(in srgb, var(--ink) 85%, var(--paper)); }
+.sk-rail { display: grid; align-content: start; gap: 10px; }
+.sk-thumb { aspect-ratio: 16 / 9; border-radius: var(--r-md); }
+
+/* Navigation progress (site + admin) */
+.nav-progress {
+  position: fixed; left: 0; top: 0; z-index: 100; height: 2px; width: 100%; pointer-events: none;
+  background: var(--accent); box-shadow: 0 0 10px var(--accent);
+  transform: scaleX(0); transform-origin: left; opacity: 0;
+}
+.nav-progress.loading { opacity: 1; animation: nav-crawl 8s cubic-bezier(.1, .7, .2, 1) forwards; }
+.nav-progress.done { opacity: 0; transform: scaleX(1); transition: transform .2s ease, opacity .3s ease .15s; }
+@keyframes nav-crawl { from { transform: scaleX(.08); } to { transform: scaleX(.9); } }
+/* Dim the current page while the next one loads (after a short delay so fast hops don't flicker). */
+main, .adm-main { transition: opacity .2s ease; }
+[data-navigating] main, [data-navigating] .adm-main { opacity: .55; transition-delay: .15s; }

@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import { AdminNav } from '@/components/admin/AdminNav';
 import { IconExternal, IconLogout } from '@/components/admin/icons';
 import { FlashToast, Toaster } from '@/components/admin/Toaster';
+import { NavProgress } from '@/components/NavProgress';
 import { ThemeToggle } from '@/components/site/HeaderControls';
 import { requireAdmin } from '@/lib/auth';
 import '@/styles/admin.css';
@@ -40,6 +41,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <main className="adm-main">{children}</main>
       <Toaster />
       <Suspense><FlashToast /></Suspense>
+      <Suspense><NavProgress /></Suspense>
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { copy } from '@/lib/copy';
 import { getCategories, getNeighbours, getProject } from '@/lib/content';
 import { translator, tr, type Lang } from '@/lib/i18n';
 import { getLang } from '@/lib/lang';
-import type { ProjectCard, ProjectLink } from '@/lib/types';
+import type { ProjectLink, ProjectRef } from '@/lib/types';
 import '@/styles/viewer.css';
 
 type Props = { params: Promise<{ slug: string }> };
@@ -24,10 +24,10 @@ export default async function ProjectPage({ params }: Props) {
   const lang = await getLang();
   const t = translator(lang);
   const { slug } = await params;
-  const [project, categories] = await Promise.all([getProject(slug), getCategories()]);
+  // All three are cached and independent, so they resolve in one parallel round trip.
+  const [project, categories, { prev, next }] = await Promise.all([getProject(slug), getCategories(), getNeighbours(slug)]);
   if (!project) notFound();
 
-  const { prev, next } = await getNeighbours(project.sort);
   const category = categories.find((c) => c.slug === project.category);
   const c = copy.project;
 
@@ -103,8 +103,8 @@ export default async function ProjectPage({ params }: Props) {
         </section>
 
         <nav className="case-nav" aria-label={t(c.more)}>
-          {prev && prev.slug !== project.slug && <NeighbourCard project={prev} lang={lang} label={t(c.prev)} dir="prev" />}
-          {next && next.slug !== project.slug && next.slug !== prev?.slug && <NeighbourCard project={next} lang={lang} label={t(c.next)} dir="next" />}
+          {prev && <NeighbourCard project={prev} lang={lang} label={t(c.prev)} dir="prev" />}
+          {next && next.slug !== prev?.slug && <NeighbourCard project={next} lang={lang} label={t(c.next)} dir="next" />}
         </nav>
       </div>
     </article>
@@ -132,7 +132,7 @@ function ArrowUpRight() {
   return <svg className="proof-arrow" {...svgProps}><path d="M7 17 17 7M8 7h9v9" /></svg>;
 }
 
-function NeighbourCard({ project, lang, label, dir }: { project: ProjectCard; lang: Lang; label: string; dir: 'prev' | 'next' }) {
+function NeighbourCard({ project, lang, label, dir }: { project: ProjectRef; lang: Lang; label: string; dir: 'prev' | 'next' }) {
   return (
     <Link className={`case-neighbour ${dir}`} href={`/portfolio/${project.slug}`}>
       <FrameView frame={projectFrames(project, lang, 1)[0]} />
