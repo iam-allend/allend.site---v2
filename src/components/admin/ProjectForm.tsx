@@ -24,7 +24,7 @@ export function ProjectForm({ project, categories, nextSort }: { project?: Proje
           <Select name="status" label="Status" value={project?.status ?? 'draft'} options={[{ value: 'draft', label: 'Draf' }, { value: 'published', label: 'Terbit' }]} />
           <Text name="sort" label="Urutan" type="number" value={project?.sort ?? nextSort} />
         </div>
-        <Check name="featured" label="Unggulan — tampil di beranda" checked={project?.featured} />
+        <Check name="featured" label="Unggulan, tampil di beranda" checked={project?.featured} />
       </FormSection>
 
       <FormSection title="Cerita" help="Ringkasan singkat muncul di kartu; sisanya di halaman detail.">
@@ -41,7 +41,7 @@ export function ProjectForm({ project, categories, nextSort }: { project?: Proje
         <Area
           name="other_links"
           label="Tautan lain"
-          hint="satu per baris, “Label | https://…” — mis. Figma, dokumentasi, video demo"
+          hint="satu per baris, “Label | https://…”, mis. Figma, dokumentasi, video demo"
           rows={3}
           value={otherLinkLines(project)}
         />

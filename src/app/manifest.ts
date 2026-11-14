@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Anur Mustakim — allend.site',
-    short_name: 'allend.site',
+    name: 'ALLEND',
+    short_name: 'ALLEND',
     start_url: '/',
     display: 'standalone',
     background_color: '#12110D',

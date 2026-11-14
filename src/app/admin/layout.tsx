@@ -10,7 +10,7 @@ import { requireAdmin } from '@/lib/auth';
 import '@/styles/admin.css';
 import { Logo } from '@/components/site/Logo';
 
-export const metadata: Metadata = { title: { default: 'Dashboard', template: '%s — Admin' }, robots: { index: false } };
+export const metadata: Metadata = { title: { default: 'Dashboard', template: '%s | Admin ALLEND' }, robots: { index: false } };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { db, user } = await requireAdmin();

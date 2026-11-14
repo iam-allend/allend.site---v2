@@ -30,7 +30,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   return (
     <main className="auth">
       <aside className="auth-side">
-        <Link className="mark" href="/"><Logo className="mark-logo" /><span>allend.site</span></Link>
+        <Link className="mark" href="/"><Logo className="mark-logo" /><span>allend</span></Link>
         <div>
           <h1>{t(text.side)}</h1>
           <p>{t(text.sideBody)}</p>

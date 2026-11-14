@@ -29,7 +29,7 @@ export async function SiteShell({ lang, children }: { lang: Lang; children: Reac
     <>
       <header className="top">
         <div className="wrap">
-          <Link className="mark" href="/"><Logo className="mark-logo" /><span>allend.site</span></Link>
+          <Link className="mark" href="/"><Logo className="mark-logo" /><span>allend</span></Link>
           <NavLinks items={nav} label={t(copy.nav.main)} />
           <div className="controls">
             <LangSwitch lang={lang} label={t(copy.common.language)} />

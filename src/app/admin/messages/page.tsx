@@ -62,7 +62,7 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
                 <p className="meta"><a href={`mailto:${m.email}`}>{m.email}</a>{m.organization ? ` · ${m.organization}` : ''}</p>
                 <p>{m.body}</p>
                 <div className="actions">
-                  <a className="btn sm solid" href={`mailto:${m.email}?subject=${encodeURIComponent('Re: pesan dari allend.site')}`}><IconReply /> Balas</a>
+                  <a className="btn sm solid" href={`mailto:${m.email}?subject=${encodeURIComponent('Re: pesan dari ALLEND')}`}><IconReply /> Balas</a>
                   <ActionButton action={setMessageRead.bind(null, m.id, !m.read_at)} label={m.read_at ? 'Tandai belum dibaca' : 'Tandai dibaca'} done="Status pesan diubah." />
                   <ActionButton action={setMessageArchived.bind(null, m.id, !archived)} label={archived ? 'Kembalikan' : 'Arsipkan'} done={archived ? 'Pesan dikembalikan.' : 'Pesan diarsipkan.'} icon={<IconArchive />} className="icon-btn" />
                   <ActionButton action={deleteMessage.bind(null, m.id)} label="Hapus" done="Pesan dihapus." icon={<IconTrash />} className="icon-btn danger" confirm={`Hapus permanen pesan dari ${m.name}?`} />
