@@ -93,10 +93,7 @@ p { margin: 0; }
 }
 .top .wrap { display: flex; align-items: center; gap: 24px; height: 100%; }
 .mark { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 700; }
-.mark b {
-  display: inline-grid; place-items: center; width: 30px; height: 30px;
-  background: var(--ink); color: var(--paper); font-size: 13px; border-radius: var(--r-sm);
-}
+.mark-logo { width: 36px; height: auto; flex: none; display: block; }
 .nav { display: flex; gap: 28px; margin-left: auto; }
 .nav a { text-decoration: none; color: var(--ink-2); font-weight: 500; font-size: 15px; padding: 4px 0; border-bottom: 1.5px solid transparent; }
 .nav a:hover { color: var(--ink); }
@@ -405,7 +402,6 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 /* ---------- Login ---------- */
 .auth { flex: 1; display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
 .auth-side { background: var(--ink); color: var(--paper); padding: clamp(28px, 4vw, 56px); display: flex; flex-direction: column; justify-content: space-between; gap: 32px; }
-.auth-side .mark b { background: var(--paper); color: var(--ink); }
 .auth-side h1 { font-size: clamp(36px, 4.4vw, 60px); font-weight: 800; letter-spacing: -.04em; line-height: 1; }
 .auth-side p { opacity: .7; max-width: 36ch; margin-top: 16px; }
 .auth-side .back { color: inherit; opacity: .7; text-decoration: none; font-size: 14.5px; }

@@ -8,6 +8,7 @@ import { translator, type Lang } from '@/lib/i18n';
 import { LangSwitch, MenuButton, NavLinks, ThemeToggle } from './HeaderControls';
 import { Mascot, MascotToggle } from './Mascot';
 import { Reveal } from './Reveal';
+import { Logo } from './Logo';
 
 export function navItems(lang: Lang) {
   const t = translator(lang);
@@ -28,7 +29,7 @@ export async function SiteShell({ lang, children }: { lang: Lang; children: Reac
     <>
       <header className="top">
         <div className="wrap">
-          <Link className="mark" href="/"><b>AM</b><span>allend.site</span></Link>
+          <Link className="mark" href="/"><Logo className="mark-logo" /><span>allend.site</span></Link>
           <NavLinks items={nav} label={t(copy.nav.main)} />
           <div className="controls">
             <LangSwitch lang={lang} label={t(copy.common.language)} />

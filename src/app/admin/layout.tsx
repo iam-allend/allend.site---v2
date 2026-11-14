@@ -8,6 +8,7 @@ import { NavProgress } from '@/components/NavProgress';
 import { ThemeToggle } from '@/components/site/HeaderControls';
 import { requireAdmin } from '@/lib/auth';
 import '@/styles/admin.css';
+import { Logo } from '@/components/site/Logo';
 
 export const metadata: Metadata = { title: { default: 'Dashboard', template: '%s — Admin' }, robots: { index: false } };
 
@@ -22,7 +23,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="adm">
       <aside className="adm-side">
-        <Link className="mark" href="/admin"><b>AM</b><span>Admin</span></Link>
+        <Link className="mark" href="/admin"><Logo className="mark-logo" /><span>Admin</span></Link>
         <AdminNav unread={unread ?? 0} />
         <div className="adm-side-foot">
           <div className="adm-user">
