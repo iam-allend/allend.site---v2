@@ -1,0 +1,155 @@
+/* Project media viewer — stage, HUD, thumbnail rail, theater.
+   The stage is always dark (it is a screen), so it reads the same in both themes. */
+
+.viewer {
+  --stage: #0B0A08;
+  --hud-bg: rgb(12 11 9 / 55%);
+  --hud-line: rgb(255 255 255 / 14%);
+  --hud-ink: #F4F1EA;
+  --hud-dim: rgb(244 241 234 / 55%);
+  display: grid; grid-template-columns: minmax(0, 1fr) 168px; gap: 14px; align-items: stretch;
+}
+.viewer.single { grid-template-columns: minmax(0, 1fr); }
+.viewer > * { min-width: 0; }
+
+/* ---------- Stage ---------- */
+.stage {
+  position: relative; overflow: hidden; isolation: isolate; border-radius: var(--r-lg); background: var(--stage);
+  /* width drives height (aspect-ratio); start alignment stops the grid from stretching both axes */
+  width: 100%; align-self: start; aspect-ratio: var(--ratio, 16 / 10); touch-action: pan-y; user-select: none;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 6%) inset, 0 50px 90px -60px #000;
+}
+/* Blurred copy of the current image fills the letterbox with its own colours. */
+.stage .ambient, .theater-stage .ambient {
+  position: absolute; inset: -12%; z-index: -1; background: center / cover no-repeat;
+  filter: blur(42px) saturate(1.4); opacity: .55; transform: scale(1.05); pointer-events: none;
+}
+.stage::after {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(120% 80% at 50% 120%, rgb(0 0 0 / 55%), transparent 60%);
+}
+.stage-media { all: unset; position: absolute; inset: 0; display: grid; place-items: center; padding: 3%; cursor: zoom-in; animation: media-in .45s var(--ease); }
+.stage-media:focus-visible { outline: 2px solid var(--accent); outline-offset: -6px; border-radius: var(--r-lg); }
+.stage-media img.shot-img {
+  width: 100%; height: 100%; aspect-ratio: auto; object-fit: contain;
+  border: 0; border-radius: 0; background: none; filter: drop-shadow(0 24px 40px rgb(0 0 0 / 60%));
+}
+.stage-media .shot { width: 70%; aspect-ratio: 4 / 3; background: var(--shot-bg); }
+@keyframes media-in { from { opacity: 0; transform: scale(.985); } }
+
+/* ---------- HUD ---------- */
+.hud {
+  position: absolute; left: 14px; right: 14px; bottom: 14px; z-index: 2; display: grid; gap: 10px;
+  padding: 10px 10px 10px 16px; border-radius: var(--r-lg); color: var(--hud-ink);
+  background: var(--hud-bg); backdrop-filter: blur(14px) saturate(1.3); -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  box-shadow: 0 0 0 1px var(--hud-line) inset;
+  opacity: 0; transform: translateY(8px); transition: opacity .25s ease, transform .3s var(--ease);
+}
+.stage:hover .hud, .stage:focus-within .hud, .viewer.single .hud { opacity: 1; transform: none; }
+.hud-progress { display: flex; gap: 4px; }
+.hud-progress i { flex: 1; height: 3px; border-radius: var(--r-sm); background: var(--hud-line); transition: background-color .3s ease; }
+.hud-progress i.past { background: rgb(244 241 234 / 40%); }
+.hud-progress i { position: relative; overflow: hidden; }
+.hud-progress i.on { background: rgb(244 241 234 / 22%); }
+/* Active segment fills over the autoplay interval (AUTOPLAY_MS in ProjectGallery). */
+.hud-progress i.on::after {
+  content: ; position: absolute; inset: 0; background: var(--accent); box-shadow: 0 0 12px var(--accent);
+  transform-origin: left; animation: hud-fill var(--autoplay, 10s) linear forwards;
+}
+.viewer.paused .hud-progress i.on::after { animation-play-state: paused; }
+
+/* Autoplay timer: always-visible bar along the bottom edge of the stage. */
+.stage-timer {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; height: 3px; pointer-events: none;
+  background: var(--accent); box-shadow: 0 0 10px var(--accent); transform-origin: left;
+  animation: hud-fill var(--autoplay, 10s) linear forwards;
+}
+.viewer.paused .stage-timer { animation-play-state: paused; opacity: .55; }
+@keyframes hud-fill { from { transform: scaleX(0); } }
+.hud-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.hud-count { font-size: 13px; letter-spacing: .04em; color: var(--hud-ink); }
+.hud-count span { color: var(--hud-dim); }
+.hud-btns { display: flex; gap: 6px; }
+.hud-btn {
+  width: 36px; height: 36px; display: grid; place-items: center; border-radius: var(--r-md); cursor: pointer;
+  border: 0; background: rgb(255 255 255 / 8%); color: var(--hud-ink); transition: background-color .15s ease, transform .15s ease;
+}
+.hud-btn:hover { background: rgb(255 255 255 / 18%); }
+.hud-btn:active { transform: scale(.94); }
+.hud-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hud-btn svg { width: 18px; height: 18px; }
+
+/* ---------- Thumbnail rail ---------- */
+.rail-wrap { position: relative; min-height: 0; }
+.rail {
+  /* Absolutely placed between the step buttons, so the rail can never make the row taller
+     than the stage; it scrolls inside instead. */
+  position: absolute; left: 0; right: 0; top: 32px; bottom: 32px;
+  display: grid; align-content: start; gap: 10px; padding: 4px;
+  overflow-y: auto; scrollbar-width: none;
+  mask-image: linear-gradient(transparent, #000 28px, #000 calc(100% - 28px), transparent);
+}
+.rail::-webkit-scrollbar { display: none; }
+.thumb { all: unset; position: relative; display: block; cursor: pointer; border-radius: var(--r-md); transition: transform .2s var(--ease); }
+.thumb img.shot-img, .thumb .shot { aspect-ratio: 16 / 9; border-radius: var(--r-md); border: 1px solid var(--rule); opacity: .7; transition: opacity .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.thumb:hover img.shot-img, .thumb:hover .shot { opacity: .9; }
+.thumb[aria-current="true"] img.shot-img, .thumb[aria-current="true"] .shot {
+  opacity: 1; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent), 0 10px 24px -10px var(--accent);
+}
+.thumb:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.thumb-no {
+  position: absolute; left: 6px; bottom: 6px; font-size: 10.5px; padding: 2px 6px; border-radius: var(--r-sm);
+  background: rgb(12 11 9 / 70%); color: #F4F1EA; letter-spacing: .04em;
+}
+.rail-step {
+  display: grid; place-items: center; height: 26px; border: 0; border-radius: var(--r-md); cursor: pointer;
+  background: var(--surface); color: var(--ink-2); transition: background-color .15s ease, color .15s ease;
+}
+.rail-step:hover { background: var(--surface-2); color: var(--ink); }
+.rail-step svg { width: 16px; height: 16px; }
+.rail-step { position: absolute; left: 0; right: 0; }
+.rail-step.up { top: 0; }
+.rail-step.down { bottom: 0; }
+
+/* ---------- Theater (full screen) ---------- */
+.theater {
+  --hud-line: rgb(255 255 255 / 14%); --hud-ink: #F4F1EA; --hud-dim: rgb(244 241 234 / 55%);
+  border: 0; padding: 0; margin: 0; width: 100vw; height: 100dvh; max-width: none; max-height: none;
+  background: #070605; color: var(--hud-ink); overflow: hidden;
+}
+.theater[open] { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+.theater::backdrop { background: #000; }
+.theater-bar { display: flex; align-items: center; gap: 16px; padding: 14px clamp(14px, 3vw, 28px); border-bottom: 1px solid var(--hud-line); }
+.theater-bar strong { font-weight: 600; letter-spacing: -.01em; margin-right: auto; }
+.theater-stage { position: relative; isolation: isolate; overflow: hidden; display: grid; place-items: center; padding: clamp(12px, 3vw, 32px); touch-action: pan-y; }
+.theater-stage .ambient { opacity: .35; }
+.theater-media { display: grid; place-items: center; width: 100%; height: 100%; animation: media-in .4s var(--ease); pointer-events: none; }
+.theater-media img.shot-img {
+  width: 100%; height: 100%; aspect-ratio: auto; object-fit: contain;
+  border: 0; border-radius: 0; background: none; filter: drop-shadow(0 30px 60px #000);
+}
+.theater-media .shot { width: min(900px, 90%); }
+.filmstrip {
+  display: flex; gap: 8px; overflow-x: auto; padding: 12px clamp(14px, 3vw, 28px) 16px; justify-content: safe center;
+  border-top: 1px solid var(--hud-line); scrollbar-width: none;
+}
+.filmstrip::-webkit-scrollbar { display: none; }
+.filmstrip .thumb { flex: none; width: 96px; }
+.filmstrip .thumb img.shot-img, .filmstrip .thumb .shot { border-color: var(--hud-line); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 960px) {
+  .viewer { grid-template-columns: minmax(0, 1fr); }
+  .rail-wrap { position: static; }
+  .rail { position: static; grid-auto-flow: column; grid-auto-columns: 104px; overflow-x: auto; overflow-y: hidden; mask-image: linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 20px), transparent); }
+  .rail-step { display: none; }
+  .hud { opacity: 1; transform: none; }
+}
+@media (max-width: 720px) {
+  .stage { border-radius: var(--r-lg); aspect-ratio: 4 / 3; }
+  .hud { left: 8px; right: 8px; bottom: 8px; padding: 8px 8px 8px 12px; }
+  .hud-btn { width: 32px; height: 32px; }
+  .theater-bar strong { display: none; }
+}
+@media (hover: none) { .hud { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .stage-media, .theater-media { animation: none; } }

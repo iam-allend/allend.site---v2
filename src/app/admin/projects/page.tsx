@@ -1,177 +1,141 @@
-import { auth } from '@/lib/auth';
-import { redirect } from 'next/navigation';
-import { supabase } from '@/lib/db/supabase';
+import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Plus, Pencil, ExternalLink } from 'lucide-react';
-import DeleteProjectButton from '@/components/features/admin/DeleteProjectButton';
+import { ActionButton } from '@/components/admin/AdminForm';
+import { IconEdit, IconExternal, IconImage, IconPlus, IconSearch, IconStar, IconTrash } from '@/components/admin/icons';
+import { ADMIN_PAGER_LABELS } from '@/components/admin/labels';
+import { Pager } from '@/components/Pager';
+import { FrameView, projectFrames } from '@/components/site/ProjectMedia';
+import { deleteProject } from '@/app/admin/actions';
+import { requireAdmin } from '@/lib/auth';
+import { pageParams } from '@/lib/content';
+import type { Category, ProjectCard, ProjectStatus } from '@/lib/types';
 
-export default async function ProjectsPage() {
-  const session = await auth();
+export const metadata: Metadata = { title: 'Proyek' };
 
-  if (!session?.user) {
-    redirect('/login');
-  }
+type Search = { q?: string; status?: string; page?: string; per?: string };
+type Row = ProjectCard & { status: ProjectStatus; image_count: { count: number }[] };
 
-  // Fetch all projects with their field and tech count
-  const { data: projects, error } = await supabase
-    .from('projects')
-    .select(`
-      *,
-      field:fields(title),
-      project_technologies(count)
-    `)
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false });
+const STATUSES = [
+  { value: '', label: 'Semua' },
+  { value: 'published', label: 'Terbit' },
+  { value: 'draft', label: 'Draf' },
+];
 
-  if (error) {
-    console.error('Error fetching projects:', error);
-  }
+/** Characters that would break a PostgREST filter expression. */
+const clean = (q: string) => q.replace(/[,()%*\\]/g, ' ').trim().slice(0, 60);
+
+export default async function ProjectsPage({ searchParams }: { searchParams: Promise<Search> }) {
+  const { db } = await requireAdmin();
+  const query = await searchParams;
+  const { page, per } = pageParams(query.page, query.per);
+  const q = clean(query.q ?? '');
+  const status = query.status === 'published' || query.status === 'draft' ? query.status : '';
+
+  let list = db
+    .from('v2_projects')
+    .select(
+      'id, slug, category, year, featured, sort, status, title, client, summary, images:v2_project_images(id, bucket, path, width, height, alt, sort), image_count:v2_project_images(count)',
+      { count: 'exact' },
+    )
+    .order('sort')
+    .order('sort', { referencedTable: 'images' })
+    .limit(1, { referencedTable: 'images' })
+    .range((page - 1) * per, page * per - 1);
+  if (status) list = list.eq('status', status);
+  if (q) list = list.or(`slug.ilike.%${q}%,title->>id.ilike.%${q}%,title->>en.ilike.%${q}%`);
+
+  const [{ data, count, error }, { data: categories }] = await Promise.all([
+    list,
+    db.from('v2_categories').select('slug, name').order('sort'),
+  ]);
+  const rows = (data ?? []) as Row[];
+  const total = count ?? 0;
+  const categoryName = (slug: string) => (categories as Pick<Category, 'slug' | 'name'>[] | null)?.find((c) => c.slug === slug)?.name.id ?? slug;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <>
+      <div className="adm-head">
         <div>
-          <h1 className="text-3xl font-bold">Projects</h1>
-          <p className="text-gray-400 mt-1">Manage your portfolio projects</p>
+          <h1>Proyek</h1>
+          <p>Urutan tampil mengikuti angka urutan (kecil di atas). Bintang = tampil di beranda.</p>
         </div>
-        <Link
-          href="/admin/projects/new"
-          className="flex items-center gap-2 px-6 py-3 bg-primary text-black rounded-lg font-semibold neon-glow hover:scale-105 transition-all"
-        >
-          <Plus className="w-5 h-5" />
-          Add New Project
-        </Link>
+        <Link className="btn solid" href="/admin/projects/new"><IconPlus /> Proyek baru</Link>
       </div>
 
-      {/* Stats */}
-      <div className="grid md:grid-cols-4 gap-4">
-        <div className="glass-strong rounded-xl p-4">
-          <p className="text-sm text-gray-400">Total Projects</p>
-          <p className="text-2xl font-bold mt-1">{projects?.length || 0}</p>
-        </div>
-        <div className="glass-strong rounded-xl p-4">
-          <p className="text-sm text-gray-400">Completed</p>
-          <p className="text-2xl font-bold mt-1 text-green-400">
-            {projects?.filter((p) => p.status === 'COMPLETED').length || 0}
-          </p>
-        </div>
-        <div className="glass-strong rounded-xl p-4">
-          <p className="text-sm text-gray-400">Ongoing</p>
-          <p className="text-2xl font-bold mt-1 text-blue-400">
-            {projects?.filter((p) => p.status === 'ONGOING').length || 0}
-          </p>
-        </div>
-        <div className="glass-strong rounded-xl p-4">
-          <p className="text-sm text-gray-400">Featured</p>
-          <p className="text-2xl font-bold mt-1 text-purple-400">
-            {projects?.filter((p) => p.is_featured).length || 0}
-          </p>
-        </div>
+      <div className="toolbar">
+        <form className="search" role="search">
+          <IconSearch />
+          <input name="q" defaultValue={q} placeholder="Cari judul atau slug…" aria-label="Cari proyek" />
+          {status && <input type="hidden" name="status" value={status} />}
+          {per !== 10 && <input type="hidden" name="per" value={per} />}
+        </form>
+        <nav className="tabs" aria-label="Status">
+          {STATUSES.map((s) => {
+            const params = new URLSearchParams();
+            if (q) params.set('q', q);
+            if (s.value) params.set('status', s.value);
+            return (
+              <Link key={s.value} href={`/admin/projects${params.size ? `?${params}` : ''}`} aria-current={status === s.value ? 'page' : undefined}>
+                {s.label}
+              </Link>
+            );
+          })}
+        </nav>
       </div>
 
-      {/* Projects Table */}
-      <div className="glass-strong rounded-2xl overflow-hidden">
-        {projects && projects.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b border-white/10">
-                <tr>
-                  <th className="text-left p-4 font-semibold">Title</th>
-                  <th className="text-left p-4 font-semibold">Category</th>
-                  <th className="text-left p-4 font-semibold">Status</th>
-                  <th className="text-left p-4 font-semibold">Featured</th>
-                  <th className="text-left p-4 font-semibold">Updated</th>
-                  <th className="text-right p-4 font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {projects.map((project) => (
-                  <tr
-                    key={project.id}
-                    className="border-b border-white/5 hover:bg-white/5 transition-colors"
-                  >
-                    <td className="p-4">
-                      <div>
-                        <p className="font-medium">{project.title}</p>
-                        <p className="text-sm text-gray-400 truncate max-w-xs">
-                          {project.description}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <span className="glass px-2 py-1 rounded text-xs">
-                        {project.field?.title || 'Uncategorized'}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <span
-                        className={`px-2 py-1 rounded text-xs ${
-                          project.status === 'COMPLETED'
-                            ? 'bg-green-500/20 text-green-400'
-                            : project.status === 'ONGOING'
-                            ? 'bg-blue-500/20 text-blue-400'
-                            : 'bg-gray-500/20 text-gray-400'
-                        }`}
-                      >
-                        {project.status}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      {project.is_featured ? (
-                        <span className="text-yellow-400">⭐</span>
-                      ) : (
-                        <span className="text-gray-600">-</span>
-                      )}
-                    </td>
-                    <td className="p-4 text-sm text-gray-400">
-                      {new Date(project.updated_at).toLocaleDateString()}
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center justify-end gap-2">
-                        {project.project_url && (
-                          <a
-                            href={project.project_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2 glass rounded-lg hover:glass-strong transition-all"
-                            title="View Live"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
-                        )}
-                        <Link
-                          href={`/admin/projects/${project.id}/edit`}
-                          className="p-2 glass rounded-lg hover:glass-strong transition-all"
-                          title="Edit"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Link>
-                        <DeleteProjectButton
-                          projectId={project.id}
-                          projectTitle={project.title}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4 opacity-50">📁</div>
-            <p className="text-gray-400 mb-6">No projects yet</p>
-            <Link
-              href="/admin/projects/new"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-black rounded-lg font-semibold hover:scale-105 transition-all"
-            >
-              <Plus className="w-5 h-5" />
-              Create Your First Project
-            </Link>
-          </div>
-        )}
-      </div>
-    </div>
+      {error && <p className="notice err">Gagal memuat proyek: {error.message}</p>}
+
+      {rows.length === 0 ? (
+        <p className="empty-state">{q || status ? 'Tidak ada proyek yang cocok.' : 'Belum ada proyek.'}</p>
+      ) : (
+        <div className="adm-cards">
+          {rows.map((p) => {
+            const images = p.image_count[0]?.count ?? 0;
+            return (
+              <article key={p.id} className="pcard" data-row>
+                <Link href={`/admin/projects/${p.id}`} className="pcard-media">
+                  <FrameView frame={projectFrames(p, 'id', 1)[0]} />
+                  <span className={`status${p.status === 'published' ? ' on' : ''}`}>{p.status === 'published' ? 'Terbit' : 'Draf'}</span>
+                  {p.featured && <span className="pcard-star" title="Tampil di beranda"><IconStar /></span>}
+                </Link>
+                <div className="pcard-body">
+                  <h3><Link href={`/admin/projects/${p.id}`}>{p.title.id}</Link></h3>
+                  <p>{p.summary.id}</p>
+                  <ul className="pcard-meta">
+                    <li>{categoryName(p.category)}</li>
+                    {p.year && <li>{p.year}</li>}
+                    <li><IconImage /> {images}</li>
+                    <li className="data">#{p.sort}</li>
+                  </ul>
+                </div>
+                <div className="pcard-actions">
+                  <Link className="btn sm ghost" href={`/admin/projects/${p.id}`}><IconEdit /> Ubah</Link>
+                  {p.status === 'published' && (
+                    <Link className="icon-btn" href={`/portfolio/${p.slug}`} target="_blank" aria-label="Lihat di situs" title="Lihat di situs"><IconExternal /></Link>
+                  )}
+                  <ActionButton
+                    action={deleteProject.bind(null, p.id)}
+                    label="Hapus"
+                    icon={<IconTrash />}
+                    className="icon-btn danger"
+                    confirm={`Hapus “${p.title.id}” beserta ${images} gambarnya? Tindakan ini tidak bisa dibatalkan.`}
+                  />
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
+
+      <Pager
+        path="/admin/projects"
+        params={{ q: q || undefined, status: status || undefined }}
+        page={page}
+        per={per}
+        pages={Math.max(1, Math.ceil(total / per))}
+        total={total}
+        labels={ADMIN_PAGER_LABELS}
+      />
+    </>
   );
 }

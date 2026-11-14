@@ -1,20 +1,46 @@
-import { auth } from '@/lib/auth';
-import { NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
 
-export default auth((req) => {
-  const isLoggedIn = !!req.auth;
-  const isAdminRoute = req.nextUrl.pathname.startsWith('/admin');
+// Refreshes the Supabase session cookie and keeps signed-out visitors out of /admin.
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({ request });
 
-  // Protect admin routes
-  if (isAdminRoute && !isLoggedIn) {
-    const loginUrl = new URL('/login', req.url);
-    loginUrl.searchParams.set('callbackUrl', req.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll: () => request.cookies.getAll(),
+        setAll: (list) => {
+          for (const { name, value } of list) request.cookies.set(name, value);
+          response = NextResponse.next({ request });
+          for (const { name, value, options } of list) response.cookies.set(name, value, options);
+        },
+      },
+    },
+  );
+
+  const { data: { user } } = await supabase.auth.getUser();
+  const { pathname } = request.nextUrl;
+
+  if (!user && pathname.startsWith('/admin')) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    url.search = '';
+    url.searchParams.set('next', pathname);
+    return NextResponse.redirect(url);
   }
 
-  return NextResponse.next();
-});
+  if (user && pathname === '/login') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/admin';
+    url.search = '';
+    return NextResponse.redirect(url);
+  }
+
+  return response;
+}
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/login'],
 };

@@ -1,122 +1,79 @@
-import { auth } from '@/lib/auth';
-import { redirect } from 'next/navigation';
-import { getAllContacts, getContactStats } from '@/lib/db/queries/contacts';
-import MessageCard from '@/components/features/admin/MessageCard';
-import { Inbox, Mail, CheckCircle, Filter } from 'lucide-react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
+import { ActionButton } from '@/components/admin/AdminForm';
+import { IconArchive, IconReply, IconTrash } from '@/components/admin/icons';
+import { ADMIN_PAGER_LABELS } from '@/components/admin/labels';
+import { Pager } from '@/components/Pager';
+import { deleteMessage, setMessageArchived, setMessageRead } from '@/app/admin/actions';
+import { requireAdmin } from '@/lib/auth';
+import { pageParams } from '@/lib/content';
+import { copy } from '@/lib/copy';
+import { dateTime } from '@/lib/format';
+import type { Message } from '@/lib/types';
 
-interface MessagesPageProps {
-  searchParams: Promise<{
-    filter?: 'all' | 'unread' | 'replied';
-  }>;
-}
+export const metadata: Metadata = { title: 'Pesan' };
 
-export default async function MessagesPage({ searchParams }: MessagesPageProps) {
-  const session = await auth();
-  const params = await searchParams;
+export default async function MessagesPage({ searchParams }: { searchParams: Promise<{ box?: string; page?: string; per?: string }> }) {
+  const { db } = await requireAdmin();
+  const query = await searchParams;
+  const archived = query.box === 'archive';
+  const { page, per } = pageParams(query.page, query.per);
 
-  if (!session?.user) {
-    redirect('/login');
-  }
-
-  const filter = params.filter || 'all';
-  const messages = await getAllContacts(filter);
-  const stats = await getContactStats();
+  let list = db
+    .from('v2_messages')
+    .select('id, topic, name, email, organization, body, read_at, archived_at, created_at', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range((page - 1) * per, page * per - 1);
+  list = archived ? list.not('archived_at', 'is', null) : list.is('archived_at', null);
+  const { data, count } = await list;
+  const messages = (data ?? []) as Message[];
+  const total = count ?? 0;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Messages</h1>
-        <p className="text-gray-400 mt-1">Manage contact form messages</p>
-      </div>
-
-      {/* Stats */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <div className="glass-strong rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <Inbox className="w-8 h-8 text-primary" />
-            <div>
-              <p className="text-sm text-gray-400">Total Messages</p>
-              <p className="text-2xl font-bold">{stats.total}</p>
-            </div>
-          </div>
-        </div>
-        <div className="glass-strong rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <Mail className="w-8 h-8 text-blue-400" />
-            <div>
-              <p className="text-sm text-gray-400">Unread</p>
-              <p className="text-2xl font-bold text-blue-400">{stats.unread}</p>
-            </div>
-          </div>
-        </div>
-        <div className="glass-strong rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <CheckCircle className="w-8 h-8 text-green-400" />
-            <div>
-              <p className="text-sm text-gray-400">Replied</p>
-              <p className="text-2xl font-bold text-green-400">{stats.replied}</p>
-            </div>
-          </div>
+    <>
+      <div className="adm-head">
+        <div>
+          <h1>Pesan</h1>
+          <p>Dari formulir kontak. Klik untuk membaca, balas langsung lewat email pengirim.</p>
         </div>
       </div>
 
-      {/* Filter */}
-      <div className="flex items-center gap-2">
-        <Filter className="w-5 h-5 text-gray-400" />
-        <div className="flex gap-2">
-          <Link
-            href="/admin/messages"
-            className={`px-4 py-2 rounded-lg transition-all ${
-              filter === 'all'
-                ? 'glass-strong border-2 border-primary/30 text-primary'
-                : 'glass hover:glass-strong'
-            }`}
-          >
-            All ({stats.total})
-          </Link>
-          <Link
-            href="/admin/messages?filter=unread"
-            className={`px-4 py-2 rounded-lg transition-all ${
-              filter === 'unread'
-                ? 'glass-strong border-2 border-primary/30 text-primary'
-                : 'glass hover:glass-strong'
-            }`}
-          >
-            Unread ({stats.unread})
-          </Link>
-          <Link
-            href="/admin/messages?filter=replied"
-            className={`px-4 py-2 rounded-lg transition-all ${
-              filter === 'replied'
-                ? 'glass-strong border-2 border-primary/30 text-primary'
-                : 'glass hover:glass-strong'
-            }`}
-          >
-            Replied ({stats.replied})
-          </Link>
-        </div>
-      </div>
+      <nav className="tabs" aria-label="Kotak">
+        <Link href="/admin/messages" aria-current={!archived ? 'page' : undefined}>Kotak masuk</Link>
+        <Link href="/admin/messages?box=archive" aria-current={archived ? 'page' : undefined}>Arsip</Link>
+      </nav>
 
-      {/* Messages List */}
-      <div className="space-y-4">
-        {messages && messages.length > 0 ? (
-          messages.map((message) => (
-            <MessageCard key={message.id} message={message} />
-          ))
-        ) : (
-          <div className="glass-strong rounded-2xl p-16 text-center">
-            <div className="text-6xl mb-4 opacity-50">📭</div>
-            <p className="text-gray-400 text-lg mb-2">No messages found</p>
-            <p className="text-gray-500 text-sm">
-              {filter === 'unread' && "You're all caught up! No unread messages."}
-              {filter === 'replied' && 'No replied messages yet.'}
-              {filter === 'all' && 'No messages received yet.'}
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
+      {messages.length === 0 ? (
+        <p className="empty-state">{archived ? 'Arsip kosong.' : 'Tidak ada pesan baru.'}</p>
+      ) : (
+        <div className="adm-card flush">
+          {messages.map((m) => (
+            <details key={m.id} className={`msg${m.read_at ? '' : ' unread'}`} data-row>
+              <summary>
+                <span className="dot" />
+                <span className="avatar" aria-hidden="true">{m.name[0]?.toUpperCase()}</span>
+                <span className="grow">
+                  <b>{m.name}</b> <span className="status">{copy.contact.topics[m.topic].id}</span>
+                  <small>{m.body}</small>
+                </span>
+                <time dateTime={m.created_at}>{dateTime(m.created_at, 'id')}</time>
+              </summary>
+              <div className="body">
+                <p className="meta"><a href={`mailto:${m.email}`}>{m.email}</a>{m.organization ? ` · ${m.organization}` : ''}</p>
+                <p>{m.body}</p>
+                <div className="actions">
+                  <a className="btn sm solid" href={`mailto:${m.email}?subject=${encodeURIComponent('Re: pesan dari allend.site')}`}><IconReply /> Balas</a>
+                  <ActionButton action={setMessageRead.bind(null, m.id, !m.read_at)} label={m.read_at ? 'Tandai belum dibaca' : 'Tandai dibaca'} done="Status pesan diubah." />
+                  <ActionButton action={setMessageArchived.bind(null, m.id, !archived)} label={archived ? 'Kembalikan' : 'Arsipkan'} done={archived ? 'Pesan dikembalikan.' : 'Pesan diarsipkan.'} icon={<IconArchive />} className="icon-btn" />
+                  <ActionButton action={deleteMessage.bind(null, m.id)} label="Hapus" done="Pesan dihapus." icon={<IconTrash />} className="icon-btn danger" confirm={`Hapus permanen pesan dari ${m.name}?`} />
+                </div>
+              </div>
+            </details>
+          ))}
+        </div>
+      )}
+
+      <Pager path="/admin/messages" params={{ box: archived ? 'archive' : undefined }} page={page} per={per} pages={Math.max(1, Math.ceil(total / per))} total={total} labels={ADMIN_PAGER_LABELS} />
+    </>
   );
 }
