@@ -64,7 +64,7 @@ function DesignCanvas() {
       <rect className="shp s-rect" x="78" y="46" width="78" height="72" rx="6" />
       <circle className="shp s-circle" cx="152" cy="52" r="28" />
       <path className="shp s-tri" d="M70 136 104 92 138 136z" />
-      <text className="shp s-text" x="88" y="104">AM</text>
+      <text className="shp s-text" x="88" y="104">Aa</text>
       <g className="anchors">
         <rect className="anchor" x="67" y="133" width="6" height="6" />
         <rect className="anchor" x="101" y="89" width="6" height="6" />

@@ -327,7 +327,7 @@ p { margin: 0; }
 /* ---------- About ---------- */
 .about-top { display: grid; grid-template-columns: 300px 1fr; gap: clamp(28px, 6vw, 88px); align-items: start; padding: clamp(40px, 6vw, 72px) 0 0; }
 .portrait { aspect-ratio: 4 / 5; border-radius: var(--r-lg); background: var(--surface); display: grid; place-items: center; position: relative; overflow: hidden; }
-.portrait > span { font-size: 96px; font-weight: 800; letter-spacing: -.05em; color: var(--surface-2); }
+.portrait-logo { width: 40%; height: auto; color: var(--surface-2); --logo-arc: var(--surface-2); }
 .portrait small { position: absolute; left: 14px; bottom: 12px; font-size: 13px; color: var(--ink-3); }
 .about-copy h1 { font-size: clamp(32px, 3.8vw, 48px); letter-spacing: -.035em; line-height: 1.08; max-width: 20ch; }
 .about-copy h1 em { font-style: normal; color: var(--accent); }

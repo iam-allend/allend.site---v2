@@ -8,6 +8,7 @@ import { getEducation, getExperiences, getProfile, getSkillGroups } from '@/lib/
 import { mediaUrl, period } from '@/lib/format';
 import { translator, tr } from '@/lib/i18n';
 import { getLang } from '@/lib/lang';
+import { Logo } from '@/components/site/Logo';
 import type { SkillGroup } from '@/lib/types';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -42,7 +43,7 @@ export default async function AboutPage() {
             <img src={mediaUrl(profile.avatar_path)} alt={profile.full_name} width={600} height={750} />
           ) : (
             <>
-              <span aria-hidden="true">AM</span>
+              <Logo className="portrait-logo" />
               <small>{t(copy.about.photoSoon)}</small>
             </>
           )}
